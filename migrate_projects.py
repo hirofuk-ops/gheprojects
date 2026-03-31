@@ -420,28 +420,6 @@ mutation CreateView($projectId: ID!, $name: String!, $layout: ProjectV2ViewLayou
 }
 """
 
-M_UPDATE_VIEW = """
-mutation UpdateView(
-  $viewId: ID!
-  $name: String
-  $layout: ProjectV2ViewLayout
-  $filter: String
-  $groupByFieldIds: [ID!]
-  $visibleFieldIds: [ID!]
-) {
-  updateProjectV2View(input: {
-    viewId: $viewId
-    name: $name
-    layout: $layout
-    filter: $filter
-    groupByFieldIds: $groupByFieldIds
-    visibleFieldIds: $visibleFieldIds
-  }) {
-    projectV2View { id }
-  }
-}
-"""
-
 
 # ---------------------------------------------------------------------------
 # GitHub GraphQL クライアント
@@ -1105,6 +1083,46 @@ class ProjectImporter:
             except Exception as exc:
                 logger.debug("  フィールド '%s' の値設定に失敗: %s", field_name, exc)
 
+    @staticmethod
+    def _build_update_view_mutation(
+        has_filter: bool,
+        has_group_by: bool,
+        has_visible: bool,
+        has_sort: bool,
+    ) -> str:
+        """設定する項目のみを含む updateProjectV2View ミューテーションを動的に構築する。
+
+        null 値を明示的に渡すと API エラーになる場合があるため、
+        実際に値が存在するパラメータのみをミューテーションに含める。
+        """
+        var_parts = ["$viewId: ID!", "$name: String", "$layout: ProjectV2ViewLayout"]
+        input_parts = ["viewId: $viewId", "name: $name", "layout: $layout"]
+
+        if has_filter:
+            var_parts.append("$filter: String")
+            input_parts.append("filter: $filter")
+        if has_group_by:
+            var_parts.append("$groupByFieldIds: [ID!]")
+            input_parts.append("groupByFieldIds: $groupByFieldIds")
+        if has_visible:
+            var_parts.append("$visibleFieldIds: [ID!]")
+            input_parts.append("visibleFieldIds: $visibleFieldIds")
+        if has_sort:
+            var_parts.append("$sortByFields: [ProjectV2ViewOrder!]")
+            input_parts.append("sortByFields: $sortByFields")
+
+        var_str = ", ".join(var_parts)
+        input_str = "\n    ".join(input_parts)
+        return (
+            f"mutation UpdateView({var_str}) {{\n"
+            f"  updateProjectV2View(input: {{\n"
+            f"    {input_str}\n"
+            f"  }}) {{\n"
+            f"    projectV2View {{ id }}\n"
+            f"  }}\n"
+            f"}}"
+        )
+
     def _import_views(
         self,
         project_id: str,
@@ -1124,6 +1142,9 @@ class ProjectImporter:
         sorted_src_views = sorted(views, key=lambda x: x.get("number", 999))
 
         for i, view in enumerate(sorted_src_views):
+            view_name = view.get("name", "?")
+            layout = view.get("layout", "TABLE_LAYOUT")
+
             try:
                 # グループ化フィールドの ID をターゲットにマッピング
                 group_by_ids = [
@@ -1136,50 +1157,62 @@ class ProjectImporter:
                     target_field_by_name[f["name"]]["id"]
                     for f in view.get("visibleFields", [])
                     if f.get("name") and f["name"] in target_field_by_name
-                ] or None
-
-                update_vars = {
-                    "name": view["name"],
-                    "layout": view.get("layout", "TABLE_LAYOUT"),
-                    "filter": view.get("filter") or None,
-                    "groupByFieldIds": group_by_ids or None,
-                    "visibleFieldIds": visible_ids,
-                }
+                ]
+                # ソートフィールドの ID をターゲットにマッピング
+                sort_by = [
+                    {
+                        "direction": s["direction"],
+                        "field": {"fieldId": target_field_by_name[s["fieldName"]]["id"]},
+                    }
+                    for s in view.get("sortByFields", [])
+                    if s.get("fieldName") and s["fieldName"] in target_field_by_name
+                ]
+                view_filter = view.get("filter") or ""
 
                 if i == 0 and existing_views:
                     # 最初のソースビュー → デフォルトビューを更新
                     target_view_id = existing_views[0]["id"]
-                    self.client.execute(
-                        M_UPDATE_VIEW,
-                        {"viewId": target_view_id, **update_vars},
-                    )
-                    logger.info("  ビュー '%s' を更新しました", view["name"])
                 else:
                     # 追加ビューを新規作成
                     data = self.client.execute(
                         M_CREATE_VIEW,
                         {
                             "projectId": project_id,
-                            "name": view["name"],
-                            "layout": view.get("layout", "TABLE_LAYOUT"),
+                            "name": view_name,
+                            "layout": layout,
                         },
                     )
-                    new_view_id = data["createProjectV2View"]["projectV2View"]["id"]
+                    target_view_id = data["createProjectV2View"]["projectV2View"]["id"]
+                    logger.info("  ビュー '%s' を作成しました (ID: %s)", view_name, target_view_id)
 
-                    # フィルター・表示フィールド等を更新
-                    if (
-                        update_vars.get("filter")
-                        or update_vars.get("groupByFieldIds")
-                        or update_vars.get("visibleFieldIds")
-                    ):
-                        self.client.execute(
-                            M_UPDATE_VIEW,
-                            {"viewId": new_view_id, **update_vars},
-                        )
-                    logger.info("  ビュー '%s' を作成しました", view["name"])
+                # ビューの設定を更新 (名前・レイアウト・フィルター・グループ化・表示フィールド・ソート)
+                # null を渡すと API エラーになる場合があるため、値が存在する項目のみを含む
+                # ミューテーションを動的に構築して実行する
+                update_vars: dict = {
+                    "viewId": target_view_id,
+                    "name": view_name,
+                    "layout": layout,
+                }
+                if view_filter:
+                    update_vars["filter"] = view_filter
+                if group_by_ids:
+                    update_vars["groupByFieldIds"] = group_by_ids
+                if visible_ids:
+                    update_vars["visibleFieldIds"] = visible_ids
+                if sort_by:
+                    update_vars["sortByFields"] = sort_by
+
+                mutation = self._build_update_view_mutation(
+                    has_filter=bool(view_filter),
+                    has_group_by=bool(group_by_ids),
+                    has_visible=bool(visible_ids),
+                    has_sort=bool(sort_by),
+                )
+                self.client.execute(mutation, update_vars)
+                logger.info("  ビュー '%s' を設定しました", view_name)
 
             except Exception as exc:
-                logger.warning("  ビュー '%s' の処理に失敗しました: %s", view.get("name", "?"), exc)
+                logger.warning("  ビュー '%s' の処理に失敗しました: %s", view_name, exc)
 
     @staticmethod
     def _describe_item(item: dict) -> str:
