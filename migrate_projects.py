@@ -1166,8 +1166,12 @@ class ProjectImporter:
                     )
                     new_view_id = data["createProjectV2View"]["projectV2View"]["id"]
 
-                    # フィルター等を更新
-                    if update_vars.get("filter") or update_vars.get("groupByFieldIds"):
+                    # フィルター・表示フィールド等を更新
+                    if (
+                        update_vars.get("filter")
+                        or update_vars.get("groupByFieldIds")
+                        or update_vars.get("visibleFieldIds")
+                    ):
                         self.client.execute(
                             M_UPDATE_VIEW,
                             {"viewId": new_view_id, **update_vars},
