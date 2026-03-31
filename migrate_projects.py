@@ -370,6 +370,27 @@ mutation CreateSingleSelectField(
 }
 """
 
+M_UPDATE_SINGLE_SELECT_FIELD = """
+mutation UpdateSingleSelectField(
+  $fieldId: ID!
+  $name: String!
+  $options: [ProjectV2SingleSelectFieldOptionInput!]!
+) {
+  updateProjectV2Field(input: {
+    fieldId: $fieldId
+    name: $name
+    singleSelectOptions: $options
+  }) {
+    projectV2Field {
+      ... on ProjectV2SingleSelectField {
+        id name dataType
+        options { id name color description }
+      }
+    }
+  }
+}
+"""
+
 M_ADD_ITEM = """
 mutation AddItem($projectId: ID!, $contentId: ID!) {
   addProjectV2ItemById(input: { projectId: $projectId, contentId: $contentId }) {
@@ -860,6 +881,15 @@ class ProjectImporter:
         field_id_map: dict = {}
         option_id_map: dict = {}
 
+        # プロジェクト作成時に自動生成された既存フィールドを取得しておく
+        # (例: GitHub が自動生成する "Status" フィールド)
+        existing_raw = self.client.paginate(
+            Q_GET_FIELDS, {"id": project_id}, "node", "fields"
+        )
+        existing_by_name: dict = {
+            f["name"]: f for f in existing_raw if f and f.get("name")
+        }
+
         for field in fields:
             dtype = field.get("dataType", "")
             fname = field.get("name", "")
@@ -878,6 +908,37 @@ class ProjectImporter:
                         }
                         for opt in field.get("options", [])
                     ]
+
+                    # 同名の SINGLE_SELECT フィールドが既に存在する場合は選択肢を上書きする
+                    # (GitHub がプロジェクト作成時に自動生成するフィールドへの対処。
+                    #  削除は不可なため updateProjectV2Field で選択肢を更新する)
+                    existing = existing_by_name.get(fname)
+                    if existing and existing.get("dataType") == "SINGLE_SELECT":
+                        logger.info(
+                            "  フィールド '%s' が既に存在します。選択肢を更新します...",
+                            fname,
+                        )
+                        data = self.client.execute(
+                            M_UPDATE_SINGLE_SELECT_FIELD,
+                            {
+                                "fieldId": existing["id"],
+                                "name": fname,
+                                "options": options_input,
+                            },
+                        )
+                        created = data["updateProjectV2Field"]["projectV2Field"]
+                        field_id_map[field["id"]] = created["id"]
+                        for src_opt in field.get("options", []):
+                            for tgt_opt in created.get("options", []):
+                                if src_opt["name"] == tgt_opt["name"]:
+                                    option_id_map[src_opt["id"]] = tgt_opt["id"]
+                                    break
+                        logger.info(
+                            "  フィールド '%s' の選択肢を更新しました (%d 選択肢)",
+                            fname, len(options_input),
+                        )
+                        continue
+
                     data = self.client.execute(
                         M_CREATE_SINGLE_SELECT_FIELD,
                         {"projectId": project_id, "name": fname, "options": options_input},
@@ -1088,12 +1149,12 @@ class ProjectImporter:
         has_filter: bool,
         has_group_by: bool,
         has_visible: bool,
-        has_sort: bool,
     ) -> str:
         """設定する項目のみを含む updateProjectV2View ミューテーションを動的に構築する。
 
         null 値を明示的に渡すと API エラーになる場合があるため、
         実際に値が存在するパラメータのみをミューテーションに含める。
+        ※ sortByFields は UpdateProjectV2ViewInput に含まれないため除外する。
         """
         var_parts = ["$viewId: ID!", "$name: String", "$layout: ProjectV2ViewLayout"]
         input_parts = ["viewId: $viewId", "name: $name", "layout: $layout"]
@@ -1107,9 +1168,6 @@ class ProjectImporter:
         if has_visible:
             var_parts.append("$visibleFieldIds: [ID!]")
             input_parts.append("visibleFieldIds: $visibleFieldIds")
-        if has_sort:
-            var_parts.append("$sortByFields: [ProjectV2ViewOrder!]")
-            input_parts.append("sortByFields: $sortByFields")
 
         var_str = ", ".join(var_parts)
         input_str = "\n    ".join(input_parts)
@@ -1123,6 +1181,34 @@ class ProjectImporter:
             f"}}"
         )
 
+    # ビュー操作 mutation がこの GHE 環境でサポートされているかどうかのキャッシュ
+    # None=未確認, True=サポート済み, False=未サポート
+    _view_mutations_supported: Optional[bool] = None
+
+    def _check_view_mutations_supported(self) -> bool:
+        """createProjectV2View / updateProjectV2View が利用可能かをイントロスペクションで確認する"""
+        if self.__class__._view_mutations_supported is not None:
+            return self.__class__._view_mutations_supported
+
+        try:
+            data = self.client.execute(
+                "{ __schema { mutationType { fields { name } } } }"
+            )
+            names = {
+                f["name"]
+                for f in (
+                    (data.get("__schema") or {})
+                    .get("mutationType", {})
+                    .get("fields") or []
+                )
+            }
+            supported = "createProjectV2View" in names or "updateProjectV2View" in names
+        except Exception:
+            supported = False
+
+        self.__class__._view_mutations_supported = supported
+        return supported
+
     def _import_views(
         self,
         project_id: str,
@@ -1131,6 +1217,41 @@ class ProjectImporter:
     ) -> None:
         """ビューを作成/更新する"""
         if not views:
+            return
+
+        # この GHE 環境がビュー操作 mutation をサポートしているか確認
+        if not self._check_view_mutations_supported():
+            logger.warning(
+                "  [ビュー移行スキップ] この GitHub Enterprise 環境は"
+                " createProjectV2View / updateProjectV2View をサポートしていません。\n"
+                "  以下のビューをプロジェクト画面から手動で作成してください:"
+            )
+            for v in sorted(views, key=lambda x: x.get("number", 999)):
+                layout_label = {
+                    "BOARD_LAYOUT": "ボード",
+                    "TABLE_LAYOUT": "テーブル",
+                    "ROADMAP_LAYOUT": "ロードマップ",
+                }.get(v.get("layout", ""), v.get("layout", ""))
+                group_by = ", ".join(f["name"] for f in v.get("groupByFields", []))
+                sort_by = ", ".join(
+                    f"{s['fieldName']} {s['direction']}" for s in v.get("sortByFields", [])
+                )
+                flt = v.get("filter", "")
+                details = []
+                if group_by:
+                    details.append(f"グループ: {group_by}")
+                if sort_by:
+                    details.append(f"ソート: {sort_by}")
+                if flt:
+                    details.append(f"フィルター: {flt}")
+                detail_str = f" [{', '.join(details)}]" if details else ""
+                logger.warning(
+                    "    #%d  %-20s  %s%s",
+                    v.get("number", 0),
+                    v.get("name", "?"),
+                    layout_label,
+                    detail_str,
+                )
             return
 
         # プロジェクト作成時に自動生成されるデフォルトビューを取得
@@ -1158,15 +1279,6 @@ class ProjectImporter:
                     for f in view.get("visibleFields", [])
                     if f.get("name") and f["name"] in target_field_by_name
                 ]
-                # ソートフィールドの ID をターゲットにマッピング
-                sort_by = [
-                    {
-                        "direction": s["direction"],
-                        "field": {"fieldId": target_field_by_name[s["fieldName"]]["id"]},
-                    }
-                    for s in view.get("sortByFields", [])
-                    if s.get("fieldName") and s["fieldName"] in target_field_by_name
-                ]
                 view_filter = view.get("filter") or ""
 
                 if i == 0 and existing_views:
@@ -1185,7 +1297,7 @@ class ProjectImporter:
                     target_view_id = data["createProjectV2View"]["projectV2View"]["id"]
                     logger.info("  ビュー '%s' を作成しました (ID: %s)", view_name, target_view_id)
 
-                # ビューの設定を更新 (名前・レイアウト・フィルター・グループ化・表示フィールド・ソート)
+                # ビューの設定を更新 (名前・レイアウト・フィルター・グループ化・表示フィールド)
                 # null を渡すと API エラーになる場合があるため、値が存在する項目のみを含む
                 # ミューテーションを動的に構築して実行する
                 update_vars: dict = {
@@ -1199,20 +1311,25 @@ class ProjectImporter:
                     update_vars["groupByFieldIds"] = group_by_ids
                 if visible_ids:
                     update_vars["visibleFieldIds"] = visible_ids
-                if sort_by:
-                    update_vars["sortByFields"] = sort_by
 
                 mutation = self._build_update_view_mutation(
                     has_filter=bool(view_filter),
                     has_group_by=bool(group_by_ids),
                     has_visible=bool(visible_ids),
-                    has_sort=bool(sort_by),
                 )
                 self.client.execute(mutation, update_vars)
-                logger.info("  ビュー '%s' を設定しました", view_name)
+                logger.info(
+                    "  ビュー '%s' を設定しました (layout=%s, groupBy=%d, visible=%d)",
+                    view_name, layout, len(group_by_ids), len(visible_ids),
+                )
 
             except Exception as exc:
-                logger.warning("  ビュー '%s' の処理に失敗しました: %s", view_name, exc)
+                logger.warning(
+                    "  ビュー '%s' の処理に失敗しました: %s",
+                    view_name,
+                    exc,
+                    exc_info=True,
+                )
 
     @staticmethod
     def _describe_item(item: dict) -> str:
