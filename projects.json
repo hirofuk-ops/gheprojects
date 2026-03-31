@@ -1,0 +1,513 @@
+{
+  "version": "1.0",
+  "source": {
+    "org": "CSADemoOrg",
+    "url": "https://api.github.com",
+    "owner_type": "org"
+  },
+  "projects": [
+    {
+      "id": "PVT_kwDODz8VBs4BODRg",
+      "number": 1,
+      "title": "タスク管理",
+      "shortDescription": "",
+      "readme": "",
+      "public": false,
+      "closed": false,
+      "url": "https://github.com/orgs/CSADemoOrg/projects/1",
+      "fields": [
+        {
+          "id": "PVTF_lADODz8VBs4BODRgzg83bhk",
+          "name": "Title",
+          "dataType": "TITLE"
+        },
+        {
+          "id": "PVTF_lADODz8VBs4BODRgzg83bho",
+          "name": "Assignees",
+          "dataType": "ASSIGNEES"
+        },
+        {
+          "id": "PVTSSF_lADODz8VBs4BODRgzg83bhs",
+          "name": "Status",
+          "dataType": "SINGLE_SELECT",
+          "options": [
+            {
+              "id": "f75ad846",
+              "name": "Backlog",
+              "color": "GREEN",
+              "description": "This item hasn't been started"
+            },
+            {
+              "id": "61e4505c",
+              "name": "Ready",
+              "color": "BLUE",
+              "description": "This is ready to be picked up"
+            },
+            {
+              "id": "47fc9ee4",
+              "name": "In progress",
+              "color": "YELLOW",
+              "description": "This is actively being worked on"
+            },
+            {
+              "id": "df73e18b",
+              "name": "In review",
+              "color": "PURPLE",
+              "description": "This item is in review"
+            },
+            {
+              "id": "98236657",
+              "name": "Done",
+              "color": "ORANGE",
+              "description": "This has been completed"
+            }
+          ]
+        },
+        {
+          "id": "PVTF_lADODz8VBs4BODRgzg83bhw",
+          "name": "Labels",
+          "dataType": "LABELS"
+        },
+        {
+          "id": "PVTF_lADODz8VBs4BODRgzg83bh0",
+          "name": "Linked pull requests",
+          "dataType": "LINKED_PULL_REQUESTS"
+        },
+        {
+          "id": "PVTF_lADODz8VBs4BODRgzg83bh4",
+          "name": "Milestone",
+          "dataType": "MILESTONE"
+        },
+        {
+          "id": "PVTF_lADODz8VBs4BODRgzg83bh8",
+          "name": "Repository",
+          "dataType": "REPOSITORY"
+        },
+        {
+          "id": "PVTF_lADODz8VBs4BODRgzg83biE",
+          "name": "Reviewers",
+          "dataType": "REVIEWERS"
+        },
+        {
+          "id": "PVTF_lADODz8VBs4BODRgzg83biI",
+          "name": "Parent issue",
+          "dataType": "PARENT_ISSUE"
+        },
+        {
+          "id": "PVTF_lADODz8VBs4BODRgzg83biM",
+          "name": "Sub-issues progress",
+          "dataType": "SUB_ISSUES_PROGRESS"
+        },
+        {
+          "id": "PVTSSF_lADODz8VBs4BODRgzg83bk8",
+          "name": "Priority",
+          "dataType": "SINGLE_SELECT",
+          "options": [
+            {
+              "id": "79628723",
+              "name": "P0",
+              "color": "RED",
+              "description": ""
+            },
+            {
+              "id": "0a877460",
+              "name": "P1",
+              "color": "ORANGE",
+              "description": ""
+            },
+            {
+              "id": "da944a9c",
+              "name": "P2",
+              "color": "YELLOW",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "id": "PVTSSF_lADODz8VBs4BODRgzg83blA",
+          "name": "Size",
+          "dataType": "SINGLE_SELECT",
+          "options": [
+            {
+              "id": "6c6483d2",
+              "name": "XS",
+              "color": "GREEN",
+              "description": ""
+            },
+            {
+              "id": "f784b110",
+              "name": "S",
+              "color": "PURPLE",
+              "description": ""
+            },
+            {
+              "id": "7515a9f1",
+              "name": "M",
+              "color": "RED",
+              "description": ""
+            },
+            {
+              "id": "817d0097",
+              "name": "L",
+              "color": "YELLOW",
+              "description": ""
+            },
+            {
+              "id": "db339eb2",
+              "name": "XL",
+              "color": "PINK",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "id": "PVTF_lADODz8VBs4BODRgzg83blE",
+          "name": "Estimate",
+          "dataType": "NUMBER"
+        },
+        {
+          "id": "PVTF_lADODz8VBs4BODRgzg83blI",
+          "name": "Start date",
+          "dataType": "DATE"
+        },
+        {
+          "id": "PVTF_lADODz8VBs4BODRgzg83blM",
+          "name": "Target date",
+          "dataType": "DATE"
+        }
+      ],
+      "items": [
+        {
+          "id": "PVTI_lADODz8VBs4BODRgzgko19A",
+          "type": "ISSUE",
+          "fieldValues": {
+            "Title": {
+              "type": "TEXT",
+              "text": "修正アラート: Vite の HTMLファイルに対するパストラバーサル脆弱性"
+            },
+            "Status": {
+              "type": "SINGLE_SELECT",
+              "name": "Done",
+              "optionId": "98236657"
+            }
+          },
+          "content": {
+            "number": 13,
+            "title": "修正アラート: Vite の HTMLファイルに対するパストラバーサル脆弱性",
+            "repo": "copilot-agent-and-mcp",
+            "owner": "CSADemoOrg"
+          }
+        },
+        {
+          "id": "PVTI_lADODz8VBs4BODRgzgko19E",
+          "type": "ISSUE",
+          "fieldValues": {
+            "Title": {
+              "type": "TEXT",
+              "text": "修正アラート: Vite のパストラバーサル脆弱性"
+            },
+            "Status": {
+              "type": "SINGLE_SELECT",
+              "name": "Backlog",
+              "optionId": "f75ad846"
+            }
+          },
+          "content": {
+            "number": 14,
+            "title": "修正アラート: Vite のパストラバーサル脆弱性",
+            "repo": "copilot-agent-and-mcp",
+            "owner": "CSADemoOrg"
+          }
+        },
+        {
+          "id": "PVTI_lADODz8VBs4BODRgzgktTtc",
+          "type": "ISSUE",
+          "fieldValues": {
+            "Title": {
+              "type": "TEXT",
+              "text": "管理者ユーザーの表示名を『Administrator』に統一する"
+            },
+            "Status": {
+              "type": "SINGLE_SELECT",
+              "name": "Done",
+              "optionId": "98236657"
+            }
+          },
+          "content": {
+            "number": 23,
+            "title": "管理者ユーザーの表示名を『Administrator』に統一する",
+            "repo": "copilot-agent-and-mcp",
+            "owner": "CSADemoOrg"
+          }
+        },
+        {
+          "id": "PVTI_lADODz8VBs4BODRgzgktYnY",
+          "type": "ISSUE",
+          "fieldValues": {
+            "Title": {
+              "type": "TEXT",
+              "text": "メンバー表示名を『Member』に統一する"
+            },
+            "Status": {
+              "type": "SINGLE_SELECT",
+              "name": "Backlog",
+              "optionId": "f75ad846"
+            }
+          },
+          "content": {
+            "number": 25,
+            "title": "メンバー表示名を『Member』に統一する",
+            "repo": "copilot-agent-and-mcp",
+            "owner": "CSADemoOrg"
+          }
+        },
+        {
+          "id": "PVTI_lADODz8VBs4BODRgzgkuv2g",
+          "type": "ISSUE",
+          "fieldValues": {
+            "Title": {
+              "type": "TEXT",
+              "text": "Sort by の表示を右側に表示する"
+            },
+            "Status": {
+              "type": "SINGLE_SELECT",
+              "name": "Done",
+              "optionId": "98236657"
+            }
+          },
+          "content": {
+            "number": 26,
+            "title": "Sort by の表示を右側に表示する",
+            "repo": "copilot-agent-and-mcp",
+            "owner": "CSADemoOrg"
+          }
+        },
+        {
+          "id": "PVTI_lADODz8VBs4BODRgzgoQ0j0",
+          "type": "ISSUE",
+          "fieldValues": {
+            "Title": {
+              "type": "TEXT",
+              "text": "TEST"
+            },
+            "Status": {
+              "type": "SINGLE_SELECT",
+              "name": "Backlog",
+              "optionId": "f75ad846"
+            }
+          },
+          "content": {
+            "number": 30,
+            "title": "TEST",
+            "repo": "copilot-agent-and-mcp",
+            "owner": "CSADemoOrg"
+          }
+        }
+      ],
+      "views": [
+        {
+          "id": "PVTV_lADODz8VBs4BODRgzgJNS4U",
+          "number": 1,
+          "name": "Backlog",
+          "layout": "BOARD_LAYOUT",
+          "filter": "",
+          "visibleFields": [
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83bhk",
+              "name": "Title"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83bho",
+              "name": "Assignees"
+            },
+            {
+              "id": "PVTSSF_lADODz8VBs4BODRgzg83bhs",
+              "name": "Status"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83bh0",
+              "name": "Linked pull requests"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83biM",
+              "name": "Sub-issues progress"
+            },
+            {
+              "id": "PVTSSF_lADODz8VBs4BODRgzg83bk8",
+              "name": "Priority"
+            },
+            {
+              "id": "PVTSSF_lADODz8VBs4BODRgzg83blA",
+              "name": "Size"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83blE",
+              "name": "Estimate"
+            }
+          ],
+          "groupByFields": [],
+          "sortByFields": [
+            {
+              "direction": "ASC",
+              "fieldName": "Priority"
+            }
+          ]
+        },
+        {
+          "id": "PVTV_lADODz8VBs4BODRgzgJNS5M",
+          "number": 2,
+          "name": "Priority board",
+          "layout": "BOARD_LAYOUT",
+          "filter": "",
+          "visibleFields": [
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83bhk",
+              "name": "Title"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83bho",
+              "name": "Assignees"
+            },
+            {
+              "id": "PVTSSF_lADODz8VBs4BODRgzg83bhs",
+              "name": "Status"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83bh0",
+              "name": "Linked pull requests"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83biM",
+              "name": "Sub-issues progress"
+            },
+            {
+              "id": "PVTSSF_lADODz8VBs4BODRgzg83blA",
+              "name": "Size"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83blE",
+              "name": "Estimate"
+            }
+          ],
+          "groupByFields": [
+            {
+              "id": "PVTSSF_lADODz8VBs4BODRgzg83bk8",
+              "name": "Priority"
+            }
+          ],
+          "sortByFields": []
+        },
+        {
+          "id": "PVTV_lADODz8VBs4BODRgzgJNS5Q",
+          "number": 3,
+          "name": "Team items",
+          "layout": "TABLE_LAYOUT",
+          "filter": "",
+          "visibleFields": [
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83bhk",
+              "name": "Title"
+            },
+            {
+              "id": "PVTSSF_lADODz8VBs4BODRgzg83bhs",
+              "name": "Status"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83bh0",
+              "name": "Linked pull requests"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83biM",
+              "name": "Sub-issues progress"
+            },
+            {
+              "id": "PVTSSF_lADODz8VBs4BODRgzg83bk8",
+              "name": "Priority"
+            },
+            {
+              "id": "PVTSSF_lADODz8VBs4BODRgzg83blA",
+              "name": "Size"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83blE",
+              "name": "Estimate"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83blI",
+              "name": "Start date"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83blM",
+              "name": "Target date"
+            }
+          ],
+          "groupByFields": [
+            {
+              "id": "PVTSSF_lADODz8VBs4BODRgzg83bhs",
+              "name": "Status"
+            }
+          ],
+          "sortByFields": []
+        },
+        {
+          "id": "PVTV_lADODz8VBs4BODRgzgJNS5U",
+          "number": 4,
+          "name": "Roadmap",
+          "layout": "ROADMAP_LAYOUT",
+          "filter": "",
+          "visibleFields": [
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83bhk",
+              "name": "Title"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83bho",
+              "name": "Assignees"
+            },
+            {
+              "id": "PVTSSF_lADODz8VBs4BODRgzg83bhs",
+              "name": "Status"
+            }
+          ],
+          "groupByFields": [],
+          "sortByFields": []
+        },
+        {
+          "id": "PVTV_lADODz8VBs4BODRgzgJNS5Y",
+          "number": 5,
+          "name": "My items",
+          "layout": "TABLE_LAYOUT",
+          "filter": "assignee:@me",
+          "visibleFields": [
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83bhk",
+              "name": "Title"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83bh0",
+              "name": "Linked pull requests"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83biM",
+              "name": "Sub-issues progress"
+            },
+            {
+              "id": "PVTSSF_lADODz8VBs4BODRgzg83bk8",
+              "name": "Priority"
+            },
+            {
+              "id": "PVTSSF_lADODz8VBs4BODRgzg83blA",
+              "name": "Size"
+            },
+            {
+              "id": "PVTF_lADODz8VBs4BODRgzg83blE",
+              "name": "Estimate"
+            }
+          ],
+          "groupByFields": [],
+          "sortByFields": []
+        }
+      ]
+    }
+  ]
+}
